@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	 	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd 
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>classpath:properties/admin-application.properties</value>
+		</property>
+	</bean>
+	<!-- Scan base packages for Controller,Repository,Service -->
+	<context:component-scan base-package="org.nimesh.spring_security" />
+	<!-- 	Enable MVC Annotation -->
+	<mvc:annotation-driven />
+	
+<!-- 	Enable MVC resources(jsp,css,js,etc.) mapping location -->
+	<mvc:resources location="/resources/" mapping="/resources/**"></mvc:resources>
+	
+<!-- 	Set View Resolver for view(jsp) pages -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+<!-- 		Example: a logical view name of 'showMessage' is mapped to '/WEB-INF/jsp/showMessage.jsp' -->
+		<property name="prefix" value="/WEB-INF/views/" />
+		<property name="suffix" value=".jsp" />
+	</bean>	
+
+	<!-- Set new data source for amlf-app. You cannot use same data source for 
+		multiple transaction manager. -->
+	<bean id="amlfAppDataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName">
+			<value>${jdbc.driverClassName}</value>
+		</property>
+		<property name="url">
+			<value>${jdbc.url}</value>
+		</property>
+		<property name="username">
+			<value>${jdbc.username}</value>
+		</property>
+		<property name="password">
+			<value>${jdbc.password}</value>
+		</property>
+	</bean>
+
+	<!-- Set entity manager factory for jpa -->
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource">
+			<ref bean="amlfAppDataSource" />
+		</property>
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter"></bean>
+		</property>
+		<property name="jpaProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+				<prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.use_second_level_cache}</prop>
+				<prop key="hibernate.cache.use_query_cache">${hibernate.cache.use_query_cache}</prop>
+			</props>
+		</property>
+		<property name="packagesToScan" value="org.nimesh.spring_security" />
+	</bean>
+
+	<!-- Set transaction manager: JpaTransactionManager for amlf-app -->
+	<bean id="jpaTransactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory">
+			<ref bean="entityManagerFactory" />
+		</property>
+	</bean>
+
+	<!-- Enable Transaction annotation -->
+	<tx:annotation-driven transaction-manager="jpaTransactionManager" />
+
+	<!-- Declare jpa respository package -->
+	<jpa:repositories base-package="org.nimesh.spring_security" />
+
+	<bean id="customUserDetailsServiceImpl"
+		class="org.nimesh.spring_security.service.impl.CustomUserDetailsServiceImpl" />
+		
+	<import resource="classpath:spring/spring-security-config.xml" />
+</beans>
